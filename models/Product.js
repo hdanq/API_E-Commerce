@@ -36,11 +36,13 @@ const Product = new Schema(
       type: Number,
       default: 0,
     },
-    rating: {
-      star: { type: Number },
-      postedBy: { type: mongoose.Types.ObjectId, ref: "Users" },
-      comment: { type: String },
-    },
+    rating: [
+      {
+        star: { type: Number },
+        postedBy: { type: mongoose.Types.ObjectId, ref: "Users" },
+        comment: { type: String },
+      },
+    ],
     totalRating: {
       type: Number,
       default: 0,

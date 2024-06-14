@@ -44,10 +44,36 @@ const productController = {
   // Get all products
   getProducts: async (req, res, next) => {
     try {
-      const products = await Product.find();
+      // Filtering
+      const queries = { ...req.query };
+      const excludeFields = ["fields", "sort", "page", "limit"];
+      excludeFields.forEach((field) => delete queries[field]);
+
+      // Advanced filtering
+      let queryStr = JSON.stringify(queries);
+      queryStr = queryStr.replace(
+        /\b(gt|gte|lt|lte)\b/g,
+        (match) => `$${match}`
+      );
+      const query = JSON.parse(queryStr);
+
+      // Search by title
+      if (queries?.title) {
+        query.title = { $regex: queries.title, $options: "i" };
+      }
+
+      const products = await Product.find(query)
+        .select(req.query.fields)
+        .sort(req.query.sort)
+        .skip((req.query.page - 1) * req.query.limit)
+        .limit(req.query.limit);
+
+      const totalProducts = products.countDocuments();
+
       return res.status(200).json({
         success: products ? true : false,
-        data: products ? products : "Can not get products!",
+        total: totalProducts,
+        data: products ? products : "Can not find products!",
       });
     } catch (error) {
       next(error);
