@@ -14,10 +14,15 @@ const handleErrors = (err, req, res, next) => {
   if (statusCode === 404) {
     return res.status(404).json({ success: false, message: "404 Not Found!" });
   }
-  if (err && err.code === 11000 && err.keyValue.email) {
+  if (err?.code === 11000 && err?.keyValue?.email) {
     return res
       .status(400)
       .json({ success: false, message: "Email already exists" });
+  }
+  if (err?.code === 11000 && err?.keyValue?.code) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Coupon code already exists" });
   }
   if (err.message === "Incorrect password") {
     return res
@@ -31,7 +36,7 @@ const handleErrors = (err, req, res, next) => {
       message: "Incorrect email",
     });
   }
-  if (err.message.includes("Product validation failed")) {
+  if (err.message?.includes("Product validation failed")) {
     Object.values(err.errors).forEach((val) => {
       return res.status(400).json({
         success: false,
@@ -39,7 +44,7 @@ const handleErrors = (err, req, res, next) => {
       });
     });
   }
-  if (err.message.includes("Users validation failed")) {
+  if (err.message?.includes("Users validation failed")) {
     Object.values(err.errors).forEach((val) => {
       return res.status(400).json({
         success: false,
@@ -47,7 +52,24 @@ const handleErrors = (err, req, res, next) => {
       });
     });
   }
-  res.send(err.message);
+  if (err.message?.includes("Coupon validation failed")) {
+    Object.values(err.errors).forEach((val) => {
+      return res.status(400).json({
+        success: false,
+        message: val.message,
+      });
+    });
+  }
+  if (err.message?.includes("Blog validation failed")) {
+    Object.values(err.errors).forEach((val) => {
+      return res.status(400).json({
+        success: false,
+        message: val.message,
+      });
+    });
+  }
+
+  res.send(err);
 };
 
 module.exports = { notFound, handleErrors };

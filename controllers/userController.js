@@ -7,7 +7,6 @@ const {
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../ultils/email");
 const crypto = require("crypto");
-const { get } = require("http");
 
 const userController = {
   // Register function
@@ -175,7 +174,8 @@ const userController = {
 
         return res.status(200).json({
           success: true,
-          message: "Token sent to email!",
+          message:
+            "We have sent a link to your email. Please check your email to reset your password!",
         });
       } catch (error) {
         user.passwordResetToken = undefined;
@@ -194,44 +194,49 @@ const userController = {
 
   // Reset password function
   async resetPassword(req, res, next) {
-    const { password, resetToken } = req.body;
-    const passwordResetToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+    try {
+      const { password } = req.body;
+      const { resetToken } = req.params;
+      const passwordResetToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
 
-    if (!password || !resetToken) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing fields" });
-    }
+      if (!password || !resetToken) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Missing fields" });
+      }
 
-    const user = await Users.findOne({
-      passwordResetToken,
-      passwordResetExpires: { $gt: Date.now() },
-    });
-
-    console.log(user);
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "This link is invalid or has expired",
+      const user = await Users.findOne({
+        passwordResetToken,
+        passwordResetExpires: { $gt: Date.now() },
       });
+
+      console.log(user);
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: "This link is invalid or has expired",
+        });
+      }
+      user.password = password;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      user.passwordChangedAt = Date.now();
+
+      await user.save();
+
+      const loginToken = generateAccessToken(user._id, user.role);
+
+      return res.status(200).json({
+        success: user ? true : false,
+        message: user ? "Password reset successfully" : "Something went wrong!",
+        token: user ? loginToken : null,
+      });
+    } catch (error) {
+      next(error);
     }
-    user.password = password;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    user.passwordChangedAt = Date.now();
-
-    await user.save();
-
-    const loginToken = generateAccessToken(user._id, user.role);
-
-    return res.status(200).json({
-      success: user ? true : false,
-      message: user ? "Password reset successfully" : "Something went wrong!",
-      token: user ? loginToken : null,
-    });
   },
 
   // Get all users
@@ -294,6 +299,73 @@ const userController = {
       success: user ? true : false,
       message: user ? "User updated successfully" : "Something went wrong!",
     });
+  },
+  updateAddress: async (req, res, next) => {
+    const { _id } = req.user;
+    if (!req.body.address) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing Address" });
+    }
+    const user = await Users.findByIdAndUpdate(
+      _id,
+      { address: req.body.address },
+      {
+        new: true,
+      }
+    ).select("-password -refreshToken -role");
+    return res.status(200).json({
+      success: user ? true : false,
+      message: user ? "User updated successfully" : "Something went wrong!",
+    });
+  },
+
+  // Update cart
+  updateCarts: async (req, res, next) => {
+    try {
+      const { _id } = req.user;
+      const { pid, quantity, color } = req.body;
+
+      if (!pid || !quantity || !color) {
+        return res.json({
+          success: false,
+          message: `Missing required fields: ${pid ? "" : "product ID,"} ${
+            quantity ? "" : "quantity,"
+          } ${color ? "" : "color"}`,
+        });
+      }
+
+      const cartUser = await Users.findById(_id).select("carts");
+      const duplicateUser = cartUser?.carts?.find(
+        (item) => item.product?.toString() === pid
+      );
+
+      const duplicateColor = cartUser?.carts?.find(
+        (item) => item.color === color
+      );
+
+      const options =
+        duplicateColor && duplicateUser
+          ? { arrayFilters: [{ "elem.color": color }], new: true }
+          : { new: true };
+
+      const updateCart = await Users.findByIdAndUpdate(
+        _id,
+        {
+          ...(duplicateUser && duplicateColor
+            ? { $set: { "carts.$[elem].quantity": quantity } }
+            : { $push: { carts: { product: pid, quantity, color } } }),
+        },
+        options
+      );
+
+      return res.status(200).json({
+        success: updateCart ? true : false,
+        message: updateCart ? updateCart : "Something went wrong!",
+      });
+    } catch (error) {
+      next(error);
+    }
   },
 };
 

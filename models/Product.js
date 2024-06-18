@@ -22,9 +22,9 @@ const Product = new Schema(
     },
     category: {
       type: mongoose.Types.ObjectId,
-      ref: "Category",
+      ref: "ProductCategory",
     },
-    image: {
+    images: {
       type: Array,
       required: true,
     },
@@ -36,7 +36,7 @@ const Product = new Schema(
       type: Number,
       default: 0,
     },
-    rating: [
+    ratings: [
       {
         star: { type: Number },
         postedBy: { type: mongoose.Types.ObjectId, ref: "Users" },
@@ -44,10 +44,6 @@ const Product = new Schema(
       },
     ],
     totalRating: {
-      type: Number,
-      default: 0,
-    },
-    quantity: {
       type: Number,
       default: 0,
     },
