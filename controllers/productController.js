@@ -68,7 +68,7 @@ const productController = {
         .skip((req.query.page - 1) * req.query.limit)
         .limit(req.query.limit);
 
-      const totalProducts = products.countDocuments();
+      const totalProducts = await Product.countDocuments(query);
 
       return res.status(200).json({
         success: products ? true : false,

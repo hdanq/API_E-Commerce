@@ -40,12 +40,17 @@ const userController = {
       await Users.findByIdAndUpdate(user._id, { refreshToken }, { new: true });
 
       // Set refresh token to cookie
+      res.cookie("token", accessToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+      });
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.status(200).json({ token: accessToken });
+      res.status(200).json({ success: accessToken ? true : false });
     } catch (error) {
       next(error);
     }
