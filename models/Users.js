@@ -8,22 +8,22 @@ const Users = new Schema(
   {
     firstname: {
       type: String,
-      required: [true, "Please, enter your first name"],
+      required: true,
     },
     lastname: {
       type: String,
-      required: [true, "Please, enter your last name"],
+      required: true,
     },
     email: {
       type: String,
-      required: [true, "Please, enter an email"],
+      required: true,
       unique: true,
       validate: [isEmail, "Please, enter a valid email"],
       lowercase: true,
     },
     password: {
       type: String,
-      required: [true, "Please, enter an password"],
+      required: true,
       minlength: [8, "Password should be at least 8 characters long"],
     },
     role: {
