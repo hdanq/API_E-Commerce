@@ -46,7 +46,12 @@ const userController = {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.status(200).json({ success: accessToken });
+      res
+        .status(200)
+        .json({
+          success: accessToken ? true : false,
+          token: accessToken ? accessToken : "Somethings went wrong!",
+        });
     } catch (error) {
       next(error);
     }
