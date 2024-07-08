@@ -14,7 +14,7 @@ const userController = {
     try {
       const user = await Users.create(req.body);
       return res.status(201).json({
-        sucess: user ? true : false,
+        success: user ? true : false,
         message: user ? "User created successfully" : "Something went wrong!",
       });
     } catch (error) {
@@ -30,7 +30,7 @@ const userController = {
       if (!user) {
         return res
           .status(404)
-          .json({ sucess: false, message: "User not found" });
+          .json({ success: false, message: "User not found" });
       }
 
       const accessToken = generateAccessToken(user._id, user.role);
@@ -46,12 +46,10 @@ const userController = {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res
-        .status(200)
-        .json({
-          success: accessToken ? true : false,
-          token: accessToken ? accessToken : "Somethings went wrong!",
-        });
+      res.status(200).json({
+        success: accessToken ? true : false,
+        token: accessToken ? accessToken : "Somethings went wrong!",
+      });
     } catch (error) {
       next(error);
     }
@@ -68,7 +66,7 @@ const userController = {
       if (!user) {
         return res
           .status(404)
-          .json({ sucess: false, message: "User not found" });
+          .json({ success: false, message: "User not found" });
       }
 
       res.status(200).json(user);
