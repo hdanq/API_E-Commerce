@@ -37,7 +37,11 @@ const userController = {
       const refreshToken = generateRefreshToken(user._id);
 
       // Save refresh token to database
-      await Users.findByIdAndUpdate(user._id, { refreshToken }, { new: true });
+      const data = await Users.findByIdAndUpdate(
+        user._id,
+        { refreshToken },
+        { new: true }
+      ).select("-password -role");
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -49,6 +53,7 @@ const userController = {
       res.status(200).json({
         success: accessToken ? true : false,
         token: accessToken ? accessToken : "Somethings went wrong!",
+        user: data,
       });
     } catch (error) {
       next(error);
@@ -94,9 +99,10 @@ const userController = {
       }
 
       const response = await Users.findOne({ _id: decode._id, refreshToken });
+
       return res.status(200).json({
         success: response ? true : false,
-        newAccessToken: response
+        token: response
           ? generateAccessToken(response._id, response.role)
           : "Refresh token not matched!",
       });
@@ -155,16 +161,32 @@ const userController = {
         "host"
       )}/api/user/auth/resetpassword/${resetToken}`;
 
-      const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nThis link will be vaild only for 10 minutes, please ignore this email if you don't forgot your password!`;
+      const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nThis link will be vaild only for 10 minutes, please ignore this email if just a mistake`;
 
       const html = `
       <div style="background-color: #f4f4f4; max-width: 600px; margin: auto; padding: 20px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
         <h1 style="color: #333333;">Password Change Request</h1>
-        <p style="color: #555555; line-height: 1.5;">We've received a password change request for your account.</p>
-        <p style="color: #555555; line-height: 1.5;">This link will expire in 10 minutes. If you did not request a password change, please ignore this email, no changes will be made to your account.</p>
-        <p><a href="${resetURL}" style="color: #1a73e8; text-decoration: none; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word;">${resetURL}</a></p>
+        <p style="color: #555555; line-height: 1.5;">
+          We've received a password change request for your account.
+        </p>
+        <p style="color: #555555; line-height: 1.5;">
+          This link will expire in 10 minutes. If you did not request a password
+          change, please ignore this email, no changes will be made to your
+          account.
+        </p>
+        <p>
+          <a
+            href="${resetURL}"
+            style="color: #1a73e8; text-decoration: none; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word;"
+          >
+            Click here
+          </a>
+          to reset password
+        </p>
         <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #aaaaaa;">
-            <p>If you have any questions, feel free to contact our support team.</p>
+          <p>
+            If you have any questions, feel free to contact our support team.
+          </p>
         </div>
       </div>`;
 
