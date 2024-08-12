@@ -16,6 +16,9 @@ const Product = new Schema(
       type: Number,
       required: [true, "Please enter price"],
     },
+    discount: {
+      type: Number,
+    },
     sold: {
       type: Number,
       default: 0,

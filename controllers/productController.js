@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const ProductCategory = require("../models/ProductCategory");
 const slugify = require("slugify");
 
 const productController = {
@@ -60,6 +61,21 @@ const productController = {
       // Search by title
       if (queries?.title) {
         query.title = { $regex: queries.title, $options: "i" };
+      }
+
+      // Filter by category name
+      if (queries?.category) {
+        const category = await ProductCategory.findOne({
+          title: { $regex: queries.category, $options: "i" },
+        });
+        if (category) {
+          query.category = category._id;
+        } else {
+          return res.status(404).json({
+            success: false,
+            message: "Category not found",
+          });
+        }
       }
 
       const products = await Product.find(query)
